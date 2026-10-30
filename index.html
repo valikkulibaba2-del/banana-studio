@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Банан Студія</title>
+<style>
+:root{--bg:#eef0ff;--card:#fff;--ink:#1b1b3a;--mute:#5d5f86;--line:#d5d8f5;--acc:#3d5afe;--err:#c62828}
+@media (prefers-color-scheme:dark){:root{--bg:#141430;--card:#1e1e46;--ink:#eceeff;--mute:#a3a6d6;--line:#33346a;--acc:#8c9bff;--err:#ff8a80}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:24px;margin:0 0 16px}h1 span{background:#ffd84d;color:#1b1b3a;padding:0 6px;border-radius:6px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+label{display:block;font-weight:600;margin:14px 0 6px}label:first-child{margin-top:0}
+textarea,select,input{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{min-height:96px}
+button{width:100%;margin-top:16px;padding:14px;font:600 16px system-ui;border:0;border-radius:12px;background:var(--acc);color:#fff;cursor:pointer}
+button:disabled{opacity:.5}
+.msg{color:var(--err);min-height:1.5em;margin:12px 0 0}
+img{width:100%;border-radius:12px;display:block;margin-top:16px}
+a.dl{display:inline-block;margin-top:8px;color:var(--acc)}
+</style>
+</head>
+<body>
+<main>
+<h1>Банан <span>Студія</span></h1>
+<div class="panel">
+  <label for="p">Опиши, що створити</label>
+  <textarea id="p" maxlength="500" placeholder="Кіт в окулярах їсть вареники на даху"></textarea>
+  <label for="m">Модель</label>
+  <select id="m"><option value="banana">Nano Banana</option><option value="pro">Nano Banana Pro</option></select>
+  <label for="c">Код доступу</label>
+  <input id="c" type="password" autocomplete="off">
+  <button id="go">Згенерувати</button>
+  <p class="msg" id="msg" role="alert"></p>
+</div>
+<div id="out"></div>
+</main>
+<script>
+const $=i=>document.getElementById(i);
+$("c").value=localStorage.getItem("code")||"";
+$("go").onclick=async()=>{
+  const prompt=$("p").value.trim(),msg=$("msg"),btn=$("go");
+  msg.textContent="";
+  if(!prompt){msg.textContent="Опиши, що створити.";return}
+  localStorage.setItem("code",$("c").value);
+  btn.disabled=true;btn.textContent="Генерую…";
+  try{
+    const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({prompt,model:$("m").value,code:$("c").value})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||"Помилка");
+    $("out").innerHTML=`<img src="${d.image}" alt="Результат"><a class="dl" href="${d.image}" download="image.png">Завантажити</a>`;
+  }catch(e){msg.textContent=e.message}
+  btn.disabled=false;btn.textContent="Згенерувати";
+};
+</script>
+</body>
+</html>
